@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const PORT = process.env.PORT || 4002;
+const PORT = process.env.PORT || 4003;
 const app = express();
 
 let products = [

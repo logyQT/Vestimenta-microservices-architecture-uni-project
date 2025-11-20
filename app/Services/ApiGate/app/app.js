@@ -9,9 +9,8 @@ const PORT = 4000;
 
 const SERVICES = {
   LOGS: "http://localhost:4001",
-  USERS: "http://localhost:4002",
-  AUTH: "http://localhost:4003",
-  PRODUCTS: "http://localhost:4004",
+  AUTH: "http://localhost:4002",
+  PRODUCTS: "http://localhost:4003",
 };
 
 app.use(
