@@ -1,0 +1,43 @@
+const axios = require("axios");
+
+const AUTH_SERVICE_URL = "http://localhost:4000/verify";
+
+const authMiddleware = async (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  console.log("Auth Header:", authHeader);
+
+  if (!authHeader) {
+    return res.status(401).json({ error: "No authorization header provided." });
+  }
+
+  const [type, token] = authHeader.split(" ");
+
+  if (type !== "Bearer" || !token) {
+    return res.status(401).json({ error: "Invalid authorization format." });
+  }
+
+  try {
+    const response = await axios.post(AUTH_SERVICE_URL, { token });
+
+    const userData = response.data;
+
+    req.user = {
+      id: userData.userId,
+      role: userData.role,
+      username: userData.username,
+      email: userData.email,
+    };
+
+    req.headers["x-user-id"] = userData.userId;
+    req.headers["x-user-role"] = userData.role;
+    req.headers["x-user-username"] = userData.username;
+    req.headers["x-user-email"] = userData.email;
+
+    return next();
+  } catch (error) {
+    console.error("Authentication failed:", error?.response?.data || error.message);
+    return res.status(401).json({ error: "Unauthorized." });
+  }
+};
+
+module.exports = authMiddleware;

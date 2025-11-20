@@ -1,0 +1,7 @@
+{
+  "watch": ["./app/Services/AuthAPI/app/"],
+  "execMap": {
+    "js": "node"
+  },
+  "ext": "js,json"
+}
