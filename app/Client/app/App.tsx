@@ -7,15 +7,15 @@ import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 
 // Pages
-import { Home } from "./app/pages/Home";
-import { Shop } from "./app/pages/Shop";
-import { ProductDetail } from "./app/pages/ProductDetail";
-import { Login } from "./app/pages/Login";
-import { Register } from "./app/pages/Register";
-import { Profile } from "./app/pages/Profile";
-import { Checkout } from "./app/pages/Checkout";
-import { About, Contact } from "./app/pages/StaticPages";
-import { TermsOfService, PrivacyPolicy } from "./app/pages/Legal";
+import { Home } from "./pages/Home";
+import { Shop } from "./pages/Shop";
+import { ProductDetail } from "./pages/ProductDetail";
+import { Login } from "./pages/Login";
+import { Register } from "./pages/Register";
+import { Profile } from "./pages/Profile";
+import { Checkout } from "./pages/Checkout";
+import { About, Contact } from "./pages/StaticPages";
+import { TermsOfService, PrivacyPolicy } from "./pages/Legal";
 
 function ScrollToTop() {
   const { pathname } = useLocation();

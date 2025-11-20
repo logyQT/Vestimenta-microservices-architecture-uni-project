@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { api } from "../../services/api";
-import { Order } from "../../types";
+import { api } from "../services/api";
+import { Order } from "../types";
 import { Package, User as UserIcon, CreditCard, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
