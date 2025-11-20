@@ -1,10 +1,9 @@
 const axios = require("axios");
 
-const AUTH_SERVICE_URL = "http://localhost:4000/verify";
+const AUTH_SERVICE_URL = "http://localhost:4002/verify";
 
 const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
-  console.log("Auth Header:", authHeader);
 
   if (!authHeader) {
     return res.status(401).json({ error: "No authorization header provided." });

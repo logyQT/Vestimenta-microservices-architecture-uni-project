@@ -7,9 +7,6 @@ const rolesMiddleware = (allowedRoles) => (req, res, next) => {
     return res.status(401).json({ error: "No user role provided." });
   }
 
-  console.log("User Role:", userRole);
-  console.log("Allowed Roles:", rolesArray);
-
   if (rolesArray.includes(userRole)) {
     next();
   } else {

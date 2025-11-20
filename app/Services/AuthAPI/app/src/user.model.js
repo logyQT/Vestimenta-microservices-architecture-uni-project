@@ -26,7 +26,7 @@ const UserModel = {
     return rows[0];
   },
 
-  modifyById: async (id, { username, email, role, password }) => {
+  modifyById: async (id, { username, email, role, password, last_login }) => {
     const fields = [];
     const values = [];
     let index = 1;
@@ -47,16 +47,24 @@ const UserModel = {
       fields.push(`password = $${index++}`);
       values.push(hashedPassword);
     }
+    if (last_login) {
+      fields.push(`last_login = $${index++}`);
+      values.push(last_login);
+    }
 
     if (fields.length === 0) {
       throw new Error("No fields to update");
     }
 
+    const modifyTimestamp = new Date().toISOString();
+    fields.push(`last_modified = $${index++}`);
+    values.push(modifyTimestamp);
+
     const query = `
       UPDATE users
       SET ${fields.join(", ")}
       WHERE id = $${index}
-      RETURNING id, username, email, role, created_at;
+      RETURNING id, username, email, role, created_at, last_modified, last_login;
     `;
 
     values.push(id);
@@ -66,7 +74,7 @@ const UserModel = {
   },
 
   findByRole: async (role) => {
-    const query = `SELECT id, username, email, role, created_at FROM users WHERE role = $1`;
+    const query = `SELECT * FROM users WHERE role = $1`;
     const { rows } = await db.query(query, [role]);
     return rows;
   },
@@ -78,15 +86,21 @@ const UserModel = {
   },
 
   findById: async (id) => {
-    const query = `SELECT id, username, email, role, created_at FROM users WHERE id = $1`;
+    const query = `SELECT * FROM users WHERE id = $1`;
     const { rows } = await db.query(query, [id]);
     return rows[0];
   },
 
   findByEmail: async (email) => {
-    const query = `SELECT id, username, email, role, created_at FROM users WHERE email = $1`;
+    const query = `SELECT * FROM users WHERE email = $1`;
     const { rows } = await db.query(query, [email]);
     return rows[0];
+  },
+
+  findAll: async () => {
+    const query = `SELECT * FROM users`;
+    const { rows } = await db.query(query);
+    return rows;
   },
 
   verifyPassword: async (plainTextPassword, hash) => {

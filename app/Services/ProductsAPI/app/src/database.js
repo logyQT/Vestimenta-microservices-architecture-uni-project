@@ -3,7 +3,7 @@ const { Pool } = require("pg");
 const poolConfig = {
   user: process.env.DB_USER || "postgres",
   host: process.env.DB_HOST || "localhost",
-  database: process.env.DB_NAME || "auth_db",
+  database: process.env.DB_NAME || "products_db",
   password: process.env.DB_PASSWORD || "password",
   port: process.env.DB_PORT || 5432,
   max: 20, // Maximum number of clients in the pool
@@ -23,7 +23,6 @@ module.exports = {
     try {
       const res = await pool.query(text, params);
       const duration = performance.now() - start;
-      // console.log("Executed query", { text, duration });
       return res;
     } catch (error) {
       console.error("Database Query Error:", { text, error });

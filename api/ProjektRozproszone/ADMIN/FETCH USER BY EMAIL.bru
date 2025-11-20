@@ -1,0 +1,20 @@
+meta {
+  name: FETCH USER BY EMAIL
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:4000/users?email=admin@example.com
+  body: none
+  auth: inherit
+}
+
+params:query {
+  email: admin@example.com
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -3,6 +3,7 @@ const axios = require("axios");
 const cors = require("cors");
 const authMiddleware = require("./src/middleware/authMiddleware");
 const roleMiddleware = require("./src/middleware/roleMiddleware");
+const loggerMiddleware = require("./src/middleware/loggerMiddleware");
 
 const app = express();
 const PORT = 4000;
@@ -20,6 +21,8 @@ app.use(
   })
 );
 app.use(express.json());
+
+app.use(loggerMiddleware);
 
 app
   .route("/")
@@ -40,26 +43,35 @@ app
   .post(async (req, res) => {
     try {
       const response = await axios.post(SERVICES.AUTH + "/login", req.body);
-      axios.post(SERVICES.LOGS + "/logs", {
-        level: "info",
-        message: `User logged in: ${req.body.username}`,
-        source: "API_GATEWAY",
-      });
+
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
-        axios.post(SERVICES.LOGS + "/logs", {
-          level: "warn",
-          message: `Login failed for user: ${req.body.username}`,
-          source: "API_GATEWAY",
-        });
         return res.status(error.response.status).json(error.response.data);
       } else {
-        axios.post(SERVICES.LOGS + "/logs", {
-          level: "error",
-          message: `Internal server error during login for user: ${req.body.username}`,
-          source: "API_GATEWAY",
-        });
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  })
+  .options((req, res) => {
+    res.set("Allow", "POST, OPTIONS");
+    res.sendStatus(204);
+  })
+  .all((req, res) => {
+    res.set("Allow", "POST, OPTIONS");
+    return res.status(405).json({ message: `Method Not Allowed` });
+  });
+
+app
+  .route("/register")
+  .post(async (req, res) => {
+    try {
+      const response = await axios.post(SERVICES.AUTH + "/register", req.body);
+      return res.status(response.status).json(response.data);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
         return res.status(500).json({ error: "Internal Server Error" });
       }
     }
@@ -78,29 +90,26 @@ app.use(authMiddleware);
 app.get("/authenticated", (req, res) => {
   res.status(200).json({ message: "Authenticated", user: req.user });
 });
-// Protected routes below
-app.route("/verify").get((req, res) => {
-  res.status(200).json({ message: "Token is valid", user: req.user });
-});
-
-app.use(roleMiddleware(["admin", "user"]));
-// this is for testing role middleware
-app.get("/authorized", (req, res) => {
-  res.status(200).json({ message: "Authorized", user: req.user });
-});
-// Routes for users below.
-
-app.use(roleMiddleware(["admin"]));
-// this is for testing role middleware
-app.get("/admin", (req, res) => {
-  res.status(200).json({ message: "Admin Access Granted", user: req.user });
-});
-// Routes for admins below.
+// ! Routes that require authentication below.
 app
-  .route("/logs")
-  .post(async (req, res) => {
+  .route("/verify")
+  .get((req, res) => {
+    res.status(200).json({ message: "Token is valid", user: req.user });
+  })
+  .options((req, res) => {
+    res.set("Allow", "GET, OPTIONS");
+    res.sendStatus(204);
+  })
+  .all((req, res) => {
+    res.set("Allow", "GET, OPTIONS");
+    return res.status(405).json({ message: `Method Not Allowed` });
+  });
+
+app
+  .route("/me")
+  .get(async (req, res) => {
     try {
-      const response = await axios.post(SERVICES.LOGS + "/logs", req.body);
+      const response = await axios.get(SERVICES.AUTH + "/me", { headers: { "x-user-id": req.user.id } });
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -110,9 +119,9 @@ app
       }
     }
   })
-  .get(async (req, res) => {
+  .patch(async (req, res) => {
     try {
-      const response = await axios.get(SERVICES.LOGS + "/logs", { params: req.query });
+      const response = await axios.patch(SERVICES.AUTH + "/me", req.body, { headers: { "x-user-id": req.user.id } });
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -121,17 +130,143 @@ app
         return res.status(500).json({ error: "Internal Server Error" });
       }
     }
+  })
+  .delete(async (req, res) => {
+    try {
+      const response = await axios.delete(SERVICES.AUTH + "/me", { data: req.body, headers: { "x-user-id": req.user.id } });
+      return res.status(response.status).json(response.data);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  })
+  .options((req, res) => {
+    res.set("Allow", "GET, PATCH, DELETE, OPTIONS");
+    res.sendStatus(204);
+  })
+  .all((req, res) => {
+    res.set("Allow", "GET, PATCH, DELETE, OPTIONS");
+    return res.status(405).json({ message: `Method Not Allowed` });
+  });
+
+app.use(roleMiddleware(["admin", "user"]));
+// this is for testing role middleware
+app.get("/authorized", (req, res) => {
+  res.status(200).json({ message: "Authorized", user: req.user });
+});
+// ! Routes for users below.
+
+app.use(roleMiddleware(["admin"]));
+// this is for testing role middleware
+app.get("/admin", (req, res) => {
+  res.status(200).json({ message: "Admin Access Granted", user: req.user });
+});
+// ! Routes for admins below.
+app.route("/logs").get(async (req, res) => {
+  try {
+    const response = await axios.get(SERVICES.LOGS + "/logs", { params: req.query });
+    return res.status(response.status).json(response.data);
+  } catch (error) {
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    } else {
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+});
+
+app.route("/health").get(async (req, res) => {
+  let healthyServices = [];
+  let unhealthyServices = [];
+  for (const [serviceName, serviceUrl] of Object.entries(SERVICES)) {
+    try {
+      const response = await axios.get(serviceUrl + "/health");
+      if (response.status === 200) {
+        healthyServices.push(serviceName);
+      } else {
+        unhealthyServices.push(serviceName);
+      }
+    } catch (error) {
+      unhealthyServices.push({ service: serviceName, error: error.message });
+    }
+  }
+  if (unhealthyServices.length === 0) {
+    return res.status(200).json({ message: `${healthyServices.length}/${Object.keys(SERVICES).length} All Services Operational` });
+  } else {
+    return res.status(500).json({ message: `${unhealthyServices.length}/${Object.keys(SERVICES).length} Services Unhealthy`, unhealthyServices });
+  }
+});
+
+app
+  .route("/users")
+  .get(async (req, res) => {
+    try {
+      const response = await axios.get(SERVICES.AUTH + "/users", { params: req.query });
+      return res.status(response.status).json(response.data);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  })
+  .post(async (req, res) => {
+    try {
+      const response = await axios.post(SERVICES.AUTH + "/users", req.body);
+      return res.status(response.status).json(response.data);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  })
+  .put(async (req, res) => {
+    try {
+      const response = await axios.put(SERVICES.AUTH + "/users", req.body);
+      return res.status(response.status).json(response.data);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  })
+  .patch(async (req, res) => {
+    try {
+      const response = await axios.patch(SERVICES.AUTH + "/users", req.body);
+      return res.status(response.status).json(response.data);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  })
+  .delete(async (req, res) => {
+    try {
+      const response = await axios.delete(SERVICES.AUTH + "/users", { data: req.body });
+      return res.status(response.status).json(response.data);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  })
+  .all((req, res) => {
+    res.set("Allow", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    return res.status(405).json({ message: `Method Not Allowed` });
   });
 
 app.listen(PORT, async () => {
   console.log(`API Gateway is running at http://localhost:${PORT}`);
-  try {
-    axios.post(SERVICES.LOGS + "/logs", {
-      level: "info",
-      message: `API Gateway started on port ${PORT}`,
-      source: "API_GATEWAY",
-    });
-  } catch (error) {
-    console.error("Failed to log startup message:", error.message);
-  }
 });

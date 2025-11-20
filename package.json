@@ -7,7 +7,10 @@
     "start:logs": "nodemon --config nodemon.logs.json ./app/Services/LoggingAPI/app/app.js",
     "start:api": "nodemon --config nodemon.api.json ./app/Services/ApiGate/app/app.js",
     "start:auth": "nodemon --config nodemon.auth.json ./app/Services/AuthAPI/app/app.js",
-    "dev": "concurrently \"npm run start:logs\" \"npm run start:api\" \"npm run start:auth\""
+    "start:products": "nodemon --config nodemon.products.json ./app/Services/ProductsAPI/app/app.js",
+    "start:client": "nodemon --config nodemon.client.json",
+    "dev": "concurrently \"npm run start:logs\" \"npm run start:api\" \"npm run start:auth\" \"npm run start:products\" \"npm run start:client\"",
+    "init-databases": "node ./app/Services/ProductsAPI/app/src/_seedDatabase.js && node ./app/Services/AuthAPI/app/src/_seedDatabase.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

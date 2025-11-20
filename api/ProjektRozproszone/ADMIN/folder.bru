@@ -1,0 +1,54 @@
+meta {
+  name: ADMIN
+  seq: 4
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{adminAuthToken}}
+}
+
+script:pre-request {
+  const axios = require("axios");
+  
+  const loginAndGetToken = async () => {
+    try {
+      const response = await axios.post("http://localhost:4000/login", {
+        username: "admin",
+        password: "adminpass"
+      });
+      return response.data.token;
+    } catch (error) {
+      console.error("Login Request Failed:", error.message);
+      throw error; 
+    }
+  };
+  
+  let currentToken = bru.getVar("adminAuthToken");
+  
+  if (!currentToken) {
+    console.log("No token found. Logging in...");
+    const newToken = await loginAndGetToken();
+    bru.setVar("adminAuthToken", newToken);
+    console.log("Logged in successfully.");
+  
+  } else {
+    try {
+      await axios.get("http://localhost:4000/verify", {
+        headers: {
+          'Authorization': `Bearer ${currentToken}`
+        }
+      });
+      console.log("Token is valid.");
+  
+    } catch (error) {
+      console.log("Token invalid or expired. Refreshing...");
+      const newToken = await loginAndGetToken();
+      bru.setVar("adminAuthToken", newToken);
+      console.log("Token refreshed.");
+    }
+  }
+}

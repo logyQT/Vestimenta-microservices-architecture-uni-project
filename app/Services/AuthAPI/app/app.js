@@ -4,28 +4,19 @@ const jwt = require("jsonwebtoken");
 const user = require("./src/user.model");
 const app = express();
 const PORT = process.env.PORT || 4002;
-const JWT_SECRET = process.env.JWT_SECRET || "bardzo-tajny-klucz-api-bardzo-tajny-klucz-api";
-const API = process.env.API_URL || "http://localhost:4000";
+const JWT_SECRET = process.env.JWT_SECRET || "7df00b92c6e37189eecdba3b3d3260f5";
 
 app.use(express.json());
 
-const log = async (level, message, source = "AuthAPI") => {
-  try {
-    await axios.post(`${API}/logs`, { level, message, source });
-  } catch (error) {
-    console.error("Logging error:", error.message);
-  }
-};
-
-app.route("/").get((req, res) => {
-  res.status(200).json({ status: "AuthAPI is running" });
+app.route("/health").get((req, res) => {
+  res.status(200).json({ status: "AuthAPI is healthy" });
 });
 
 app.route("/register").post(async (req, res) => {
   const { username, email, password, confirmPassword } = req.body;
 
   if (!username || !email || !password || !confirmPassword) {
-    return res.status(400).json({ error: "Username, email, and password are required." });
+    return res.status(400).json({ error: "Username, email, password and confirmPassword are required." });
   }
 
   if ((await user.findByUsername(username)) || (await user.findByEmail(email))) {
@@ -38,8 +29,6 @@ app.route("/register").post(async (req, res) => {
 
   const newUser = await user.create({ username, email, password, role: "user" });
   const { password: _, ...sanitizedUser } = newUser;
-
-  log("info", `New user registered: ${username}`).catch(() => {});
 
   return res.status(201).json({ message: "User registered successfully.", user: sanitizedUser });
 });
@@ -57,6 +46,8 @@ app.route("/login").post(async (req, res) => {
     return res.status(401).json({ error: "Invalid username or password." });
   }
 
+  await user.modifyById(_user.id, { last_login: new Date().toISOString() });
+
   const payload = {
     userId: _user.id,
     role: _user.role,
@@ -64,11 +55,7 @@ app.route("/login").post(async (req, res) => {
     email: _user.email,
   };
 
-  expiresIn = username === "superadmin" ? "1Year" : "1h";
-
-  const token = jwt.sign(payload, JWT_SECRET, { expiresIn });
-
-  log("info", `User logged in: ${user.username}`).catch(() => {});
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
 
   return res.json({ token, message: "Login successful." });
 });
@@ -81,8 +68,6 @@ app.route("/verify").post((req, res) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-
-    log("info", `Token verified for user: ${decoded.username}`).catch(() => {});
 
     return res.json({
       userId: decoded.userId,
@@ -104,10 +89,16 @@ app
     if (!username || !email || !role || !password) {
       return res.status(400).json({ error: "Username, email, role, and password are required" });
     }
+
+    if (await user.findByEmail(email)) {
+      return res.status(409).json({ error: "Email already exists." });
+    }
+    if (await user.findByUsername(username)) {
+      return res.status(409).json({ error: "Username already exists." });
+    }
+
     const newUser = await user.create({ username, email, role, password });
     const { password: _, ...sanitizedUser } = newUser;
-
-    log("info", `User created: ${username}`).catch(() => {});
 
     return res.status(201).json({ message: "User created successfully", user: sanitizedUser });
   })
@@ -115,7 +106,7 @@ app
     const queryEmail = req.query.email;
     const queryUsername = req.query.username;
     const queryRole = req.query.role;
-    let filteredUsers = null;
+    let filteredUsers = await user.findAll();
     if (queryRole) {
       filteredUsers = await user.findByRole(queryRole);
     }
@@ -131,16 +122,24 @@ app
         return res.status(404).json({ error: "User not found" });
       }
     }
-
+    if (!Array.isArray(filteredUsers)) filteredUsers = [filteredUsers];
     const sanitizedUsers = filteredUsers.map(({ password, ...rest }) => rest);
     return res.status(200).json(sanitizedUsers);
   })
   .patch(async (req, res) => {
     const { id, username, email, role, password } = req.body;
     const _user = await user.findById(id);
-    if (userIndex === -1) {
+    if (!_user) {
       return res.status(404).json({ error: "User not found" });
     }
+
+    if (email && (await user.findByEmail(email)) && _user.email !== email) {
+      return res.status(409).json({ error: "Email already exists." });
+    }
+    if (username && (await user.findByUsername(username)) && _user.username !== username) {
+      return res.status(409).json({ error: "Username already exists." });
+    }
+
     if (username) _user.username = username;
     if (email) _user.email = email;
     if (role) _user.role = role;
@@ -148,8 +147,6 @@ app
 
     const modUser = await user.modifyById(id, { username, email, role, password });
     const { password: _, ...sanitizedUser } = modUser;
-
-    log("info", `User updated: ${_user.username}`).catch(() => {});
 
     return res.status(200).json({ message: "User updated successfully", user: sanitizedUser });
   })
@@ -162,12 +159,17 @@ app
     if (!_user) {
       return res.status(404).json({ error: "User not found" });
     }
+    if ((await user.findByEmail(email)) && _user.email !== email) {
+      return res.status(409).json({ error: "Email already exists." });
+    }
+    if ((await user.findByUsername(username)) && _user.username !== username) {
+      return res.status(409).json({ error: "Username already exists." });
+    }
+
     _user = { id, username, email, role, password };
 
     const replacedUser = await user.modifyById(id, { username, email, role, password });
     const { password: _, ...sanitizedUser } = replacedUser;
-
-    log("info", `User replaced: ${username}`).catch(() => {});
 
     return res.status(200).json({ message: "User replaced successfully", user: sanitizedUser });
   })
@@ -180,8 +182,6 @@ app
 
     await user.deleteById(id);
 
-    log("info", `User deleted: ID ${id}`).catch(() => {});
-
     return res.status(200).json({ message: "User deleted successfully", userId: id });
   })
   .options((req, res) => {
@@ -193,7 +193,79 @@ app
     return res.status(405).json({ message: `Method Not Allowed` });
   });
 
+app
+  .route("/me")
+  .get(async (req, res) => {
+    const currentUserId = req.headers["x-user-id"];
+    const currentUser = await user.findById(currentUserId);
+    if (!currentUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const { password, id, role, ...sanitizedUser } = currentUser;
+    return res.status(200).json(sanitizedUser);
+  })
+  .patch(async (req, res) => {
+    const currentUserId = req.headers["x-user-id"];
+    const { username, email, newPassword, confirmNewPassword, password } = req.body;
+    const _user = await user.findById(currentUserId);
+
+    if (!_user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (!password) {
+      return res.status(400).json({ error: "Current password is required to make changes." });
+    }
+    if (!(await user.verifyPassword(password, _user.password))) {
+      console.log("Provided password:", password);
+      console.log("Stored hashed password:", _user.password);
+      return res.status(400).json({ error: "Password does not match the current password." });
+    }
+    if (email && (await user.findByEmail(email)) && _user.email !== email) {
+      return res.status(409).json({ error: "Email already exists." });
+    }
+    if (username && (await user.findByUsername(username)) && _user.username !== username) {
+      return res.status(409).json({ error: "Username already exists." });
+    }
+    if (newPassword && newPassword !== confirmNewPassword) {
+      return res.status(400).json({ error: "New passwords do not match." });
+    }
+    if (newPassword && user.verifyPassword(newPassword, _user.password)) {
+      return res.status(400).json({ error: "New password must be different from the current password." });
+    }
+
+    if (username) _user.username = username;
+    if (email) _user.email = email;
+    if (newPassword) _user.password = newPassword;
+
+    const modUser = await user.modifyById(currentUserId, { username, email, password });
+    const { password: _, id, role, ...sanitizedUser } = modUser;
+    return res.status(200).json({ message: "User updated successfully", user: sanitizedUser });
+  })
+  .delete(async (req, res) => {
+    const currentUserId = req.headers["x-user-id"];
+    const { password } = req.body;
+    const _user = await user.findById(currentUserId);
+    if (!_user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (!password) {
+      return res.status(400).json({ error: "Password is required to delete the account." });
+    }
+    if (!(await user.verifyPassword(password, _user.password))) {
+      return res.status(400).json({ error: "Incorrect password." });
+    }
+    await user.deleteById(currentUserId);
+    return res.status(200).json({ message: "User deleted successfully", userId: currentUserId });
+  })
+  .options((req, res) => {
+    res.set("Allow", "GET, PATCH, DELETE, OPTIONS");
+    res.sendStatus(204);
+  })
+  .all((req, res) => {
+    res.set("Allow", "GET, PATCH, DELETE, OPTIONS");
+    return res.status(405).json({ message: `Method Not Allowed` });
+  });
+
 app.listen(PORT, () => {
   console.log(`Auth API is running at http://localhost:${PORT}`);
-  log("info", `Auth API started on port ${PORT}`).catch(() => {});
 });
