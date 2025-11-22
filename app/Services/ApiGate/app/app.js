@@ -9,10 +9,23 @@ const app = express();
 const PORT = 4000;
 
 const SERVICES = {
-  LOGS: "http://localhost:4001",
-  AUTH: "http://localhost:4002",
-  PRODUCTS: "http://localhost:4003",
+  LOGS: process.env.LOGS_SERVICE_URL || "http://localhost:4001",
+  AUTH: process.env.AUTH_SERVICE_URL || "http://localhost:4002",
+  PRODUCTS: process.env.PRODUCTS_SERVICE_URL || "http://localhost:4003",
 };
+
+const LOGS = axios.create({
+  baseURL: SERVICES.LOGS,
+  timeout: 5000,
+});
+const AUTH = axios.create({
+  baseURL: SERVICES.AUTH,
+  timeout: 5000,
+});
+const PRODUCTS = axios.create({
+  baseURL: SERVICES.PRODUCTS,
+  timeout: 5000,
+});
 
 app.use(
   cors({
@@ -42,7 +55,7 @@ app
   .route("/login")
   .post(async (req, res) => {
     try {
-      const response = await axios.post(SERVICES.AUTH + "/login", req.body);
+      const response = await AUTH.post("/login", req.body);
 
       return res.status(response.status).json(response.data);
     } catch (error) {
@@ -66,7 +79,7 @@ app
   .route("/register")
   .post(async (req, res) => {
     try {
-      const response = await axios.post(SERVICES.AUTH + "/register", req.body);
+      const response = await AUTH.post("/register", req.body);
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -85,11 +98,20 @@ app
     return res.status(405).json({ message: `Method Not Allowed` });
   });
 
-app.use(authMiddleware);
-// this is for testing auth middleware
-app.get("/authenticated", (req, res) => {
-  res.status(200).json({ message: "Authenticated", user: req.user });
+app.get("/products", async (req, res) => {
+  try {
+    const response = await PRODUCTS.get("/products", { params: req.query });
+    return res.status(response.status).json(response.data);
+  } catch (error) {
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    } else {
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
 });
+
+app.use(authMiddleware);
 // ! Routes that require authentication below.
 app
   .route("/verify")
@@ -131,6 +153,18 @@ app
       }
     }
   })
+  .put(async (req, res) => {
+    try {
+      const response = await axios.put(SERVICES.AUTH + "/me", req.body, { headers: { "x-user-id": req.user.id } });
+      return res.status(response.status).json(response.data);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  })
   .delete(async (req, res) => {
     try {
       const response = await axios.delete(SERVICES.AUTH + "/me", { data: req.body, headers: { "x-user-id": req.user.id } });
@@ -153,17 +187,9 @@ app
   });
 
 app.use(roleMiddleware(["admin", "user"]));
-// this is for testing role middleware
-app.get("/authorized", (req, res) => {
-  res.status(200).json({ message: "Authorized", user: req.user });
-});
 // ! Routes for users below.
 
 app.use(roleMiddleware(["admin"]));
-// this is for testing role middleware
-app.get("/admin", (req, res) => {
-  res.status(200).json({ message: "Admin Access Granted", user: req.user });
-});
 // ! Routes for admins below.
 app.route("/logs").get(async (req, res) => {
   try {
@@ -265,6 +291,57 @@ app
   .all((req, res) => {
     res.set("Allow", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
     return res.status(405).json({ message: `Method Not Allowed` });
+  });
+
+app
+  .route("/products")
+  .post(async (req, res) => {
+    try {
+      const response = await axios.post(SERVICES.PRODUCTS + "/products", req.body);
+      return res.status(response.status).json(response.data);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  })
+  .patch(async (req, res) => {
+    try {
+      const response = await axios.patch(SERVICES.PRODUCTS + "/products", req.body);
+      return res.status(response.status).json(response.data);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  })
+  .put(async (req, res) => {
+    try {
+      const response = await axios.put(SERVICES.PRODUCTS + "/products", req.body);
+      return res.status(response.status).json(response.data);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  })
+  .delete(async (req, res) => {
+    try {
+      const response = await axios.delete(SERVICES.PRODUCTS + "/products", { data: req.body });
+      return res.status(response.status).json(response.data);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
   });
 
 app.listen(PORT, async () => {

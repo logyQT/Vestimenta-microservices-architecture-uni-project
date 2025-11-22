@@ -2,16 +2,16 @@ const db = require("./database");
 
 const ProductModel = {
   async create(product) {
-    const { id, name, description, category, price, image, images, isNew, sizes } = product;
+    const { name, description, category, price, image, images, isNew, sizes } = product;
 
     const query = `
       INSERT INTO products 
-      (id, name, description, category, price, image, images, is_new, sizes) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+      (name, description, category, price, image, images, is_new, sizes) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
       RETURNING *;
     `;
 
-    const values = [id, name, description, category, price, image, JSON.stringify(images || []), isNew, JSON.stringify(sizes)];
+    const values = [name, description, category, price, image, JSON.stringify(images || []), isNew, JSON.stringify(sizes)];
 
     const { rows } = await db.query(query, values);
     return rows[0];

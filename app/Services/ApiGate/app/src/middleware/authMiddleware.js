@@ -25,12 +25,14 @@ const authMiddleware = async (req, res, next) => {
       role: userData.role,
       username: userData.username,
       email: userData.email,
+      created_at: userData.created_at,
     };
 
     req.headers["x-user-id"] = userData.userId;
     req.headers["x-user-role"] = userData.role;
     req.headers["x-user-username"] = userData.username;
     req.headers["x-user-email"] = userData.email;
+    req.headers["x-user-created-at"] = userData.created_at;
 
     return next();
   } catch (error) {

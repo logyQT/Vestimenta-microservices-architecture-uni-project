@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Filter, ChevronDown, LayoutGrid, Grid3x3 } from "lucide-react";
 import { ImageWithFallback } from "../components/shared/ImageWithFallback";
-import { api } from "../../services/api";
-import { Product } from "../../types";
+import { api } from "../services/api";
+import { Product } from "../types";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 export function Shop() {
@@ -41,7 +41,7 @@ export function Shop() {
     if (sortBy === "price-low") return a.price - b.price;
     if (sortBy === "price-high") return b.price - a.price;
     if (sortBy === "name") return a.name.localeCompare(b.name);
-    return 0; // featured (id order)
+    return 0;
   });
 
   return (

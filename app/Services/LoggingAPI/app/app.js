@@ -46,48 +46,27 @@ app
     const _end = req.query.end;
     const _limit = req.query.limit;
 
-    if (!logs || logs.length === 0) {
-      return res.status(200).json([]);
-    }
-
-    if (_start && isNaN(parseInt(_start, 10))) {
-      return res.status(400).json({ message: "Invalid 'start' timestamp" });
-    }
-    if (_end && isNaN(parseInt(_end, 10))) {
-      return res.status(400).json({ message: "Invalid 'end' timestamp" });
-    }
-    if (_limit && isNaN(parseInt(_limit, 10))) {
-      return res.status(400).json({ message: "Invalid 'limit' value" });
-    }
+    if (!logs || logs.length === 0) return res.status(200).json([]);
+    if (_start && isNaN(parseInt(_start, 10))) return res.status(400).json({ message: "Invalid 'start' timestamp" });
+    if (_end && isNaN(parseInt(_end, 10))) return res.status(400).json({ message: "Invalid 'end' timestamp" });
+    if (_limit && isNaN(parseInt(_limit, 10))) return res.status(400).json({ message: "Invalid 'limit' value" });
 
     let filteredLogs = logs;
-    if (_level) {
-      filteredLogs = filteredLogs.filter((log) => log.level === _level);
-    }
-    if (_source) {
-      filteredLogs = filteredLogs.filter((log) => log.source === _source);
-    }
-    if (_start) {
-      const startTime = parseInt(_start, 10);
-      filteredLogs = filteredLogs.filter((log) => log.timestamp >= startTime);
-    }
-    if (_end) {
-      const endTime = parseInt(_end, 10);
-      filteredLogs = filteredLogs.filter((log) => log.timestamp <= endTime);
-    }
-    if (_limit) {
-      const limit = parseInt(_limit, 10);
-      filteredLogs = filteredLogs.slice(0, limit);
-    }
+
+    filteredLogs = _level ? filteredLogs.filter((log) => log.level === _level) : filteredLogs;
+    filteredLogs = _source ? filteredLogs.filter((log) => log.source === _source) : filteredLogs;
+    filteredLogs = _start ? filteredLogs.filter((log) => log.timestamp >= parseInt(_start, 10)) : filteredLogs;
+    filteredLogs = _start ? filteredLogs.filter((log) => log.timestamp >= parseInt(_start, 10)) : filteredLogs;
+    filteredLogs = _end ? filteredLogs.filter((log) => log.timestamp <= parseInt(_end, 10)) : filteredLogs;
+    filteredLogs = _limit ? filteredLogs.slice(0, parseInt(_limit, 10)) : filteredLogs;
+
     res.status(200).json(filteredLogs);
   })
 
   .post((req, res) => {
     const logEntry = req.body;
 
-    if (!logEntry || Object.keys(logEntry).length === 0) {
-      return res.status(400).json({ message: "Log entry cannot be empty" });
-    }
+    if (!logEntry || Object.keys(logEntry).length === 0) return res.status(400).json({ message: "Log entry cannot be empty" });
 
     if (!logEntry.level || !logEntry.message || !logEntry.source) {
       return res.status(400).json({ message: "Log entry must contain 'level', 'message', and 'source'" });
@@ -121,11 +100,6 @@ app
 
 app.use((req, res) => {
   res.status(404).json({ message: `Resource Not Found: ${req.path}` });
-});
-
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Internal Server Error" });
 });
 
 app.listen(PORT, () => {

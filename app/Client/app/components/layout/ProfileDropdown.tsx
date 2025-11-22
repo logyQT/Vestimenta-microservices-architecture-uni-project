@@ -28,7 +28,7 @@ export function ProfileDropdown({ isLoggedIn, user, onLogout, loading }: Profile
               <User className="w-5 h-5 text-black" />
             </div>
             <div className="overflow-hidden">
-              <div className="text-white text-sm truncate font-serif">{loading ? "Loading..." : user?.name}</div>
+              <div className="text-white text-sm truncate font-serif">{loading ? "Loading..." : user?.username}</div>
               <div className="text-zinc-500 text-xs truncate">{loading ? "Loading..." : user?.email}</div>
             </div>
           </div>

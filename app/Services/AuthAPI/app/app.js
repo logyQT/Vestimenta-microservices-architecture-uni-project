@@ -34,13 +34,13 @@ app.route("/register").post(async (req, res) => {
 });
 
 app.route("/login").post(async (req, res) => {
-  const { username, email, password } = req.body;
+  const { email, password } = req.body;
 
-  if ((!username && !email) || !password) {
-    return res.status(400).json({ error: "Username or email, and password are required." });
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required." });
   }
 
-  const _user = (await user.findByUsername(username)) ?? (await user.findByEmail(email));
+  const _user = await user.findByEmail(email);
 
   if (!_user || !(await user.verifyPassword(password, _user.password))) {
     return res.status(401).json({ error: "Invalid username or password." });
@@ -53,6 +53,7 @@ app.route("/login").post(async (req, res) => {
     role: _user.role,
     username: _user.username,
     email: _user.email,
+    created_at: _user.created_at,
   };
 
   const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
@@ -74,6 +75,7 @@ app.route("/verify").post((req, res) => {
       role: decoded.role,
       username: decoded.username,
       email: decoded.email,
+      created_at: decoded.created_at,
       message: "Token is valid.",
     });
   } catch (err) {
@@ -216,8 +218,6 @@ app
       return res.status(400).json({ error: "Current password is required to make changes." });
     }
     if (!(await user.verifyPassword(password, _user.password))) {
-      console.log("Provided password:", password);
-      console.log("Stored hashed password:", _user.password);
       return res.status(400).json({ error: "Password does not match the current password." });
     }
     if (email && (await user.findByEmail(email)) && _user.email !== email) {

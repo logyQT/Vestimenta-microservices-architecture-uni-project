@@ -12,9 +12,11 @@ export interface Product {
 
 export interface User {
   id: string;
-  name: string;
+  username: string;
   email: string;
-  role: 'user' | 'admin';
+  role: "user" | "admin";
+  created_at: string;
+  password?: string;
 }
 
 export interface CartItem extends Product {
@@ -27,7 +29,7 @@ export interface Order {
   date: string;
   items: CartItem[];
   total: number;
-  status: 'Processing' | 'Shipped' | 'Delivered';
+  status: "Processing" | "Shipped" | "Delivered";
 }
 
 export interface AuthResponse {
