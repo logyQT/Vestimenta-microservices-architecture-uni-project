@@ -1,0 +1,151 @@
+services:
+  # ---------------------------
+  # DATABASES
+  # ---------------------------
+  auth-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: auth_db
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+    networks:
+      - internal_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  products-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: products_db
+    volumes:
+      - products_data:/var/lib/postgresql/data
+    networks:
+      - internal_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------
+  # DB INITIALIZERS (Run Once)
+  # ---------------------------
+  auth-seed:
+    build: ./app/Services/AuthAPI
+    # Override command to run the seed script
+    command: npm run init-db
+    environment:
+      DB_HOST: auth-db
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: auth_db
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    networks:
+      - internal_net
+    # We use a profile so these don't auto-start on 'docker-compose up'
+    profiles: ["init"]
+
+  products-seed:
+    build: ./app/Services/ProductsAPI
+    command: npm run init-db
+    environment:
+      DB_HOST: products-db
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: products_db
+    depends_on:
+      products-db:
+        condition: service_healthy
+    networks:
+      - internal_net
+    profiles: ["init"]
+
+  # ---------------------------
+  # MICROSERVICES
+  # ---------------------------
+  auth-service:
+    build: ./app/Services/AuthAPI
+    environment:
+      PORT: 4002
+      DB_HOST: auth-db
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: auth_db
+      JWT_SECRET: production_secret_key_change_me
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    networks:
+      - internal_net
+
+  products-service:
+    build: ./app/Services/ProductsAPI
+    environment:
+      PORT: 4003
+      DB_HOST: products-db
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: products_db
+    depends_on:
+      products-db:
+        condition: service_healthy
+    networks:
+      - internal_net
+
+  logging-service:
+    build: ./app/Services/LoggingAPI
+    environment:
+      PORT: 4001
+    networks:
+      - internal_net
+
+  # ---------------------------
+  # API GATEWAY
+  # ---------------------------
+  api-gateway:
+    build: ./app/Services/ApiGate
+    environment:
+      PORT: 4000
+      AUTH_SERVICE_URL: http://auth-service:4002
+      LOGS_SERVICE_URL: http://logging-service:4001
+      PRODUCTS_SERVICE_URL: http://products-service:4003
+      # The frontend URL from the user's browser perspective
+      CLIENT_URL: "http://localhost"
+    depends_on:
+      - auth-service
+      - logging-service
+      - products-service
+    networks:
+      - internal_net
+      - gateway_net
+
+  # ---------------------------
+  # FRONTEND
+  # ---------------------------
+  client:
+    build: ./app/Client
+    ports:
+      - "80:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - gateway_net
+
+networks:
+  internal_net:
+    internal: true
+  gateway_net:
+    driver: bridge
+
+volumes:
+  auth_data:
+  products_data:

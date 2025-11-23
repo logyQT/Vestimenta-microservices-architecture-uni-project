@@ -131,7 +131,7 @@ app
   .route("/me")
   .get(async (req, res) => {
     try {
-      const response = await axios.get(SERVICES.AUTH + "/me", { headers: { "x-user-id": req.user.id } });
+      const response = await AUTH.get("/me", { headers: { "x-user-id": req.user.id } });
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -143,7 +143,7 @@ app
   })
   .patch(async (req, res) => {
     try {
-      const response = await axios.patch(SERVICES.AUTH + "/me", req.body, { headers: { "x-user-id": req.user.id } });
+      const response = await AUTH.patch("/me", req.body, { headers: { "x-user-id": req.user.id } });
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -155,7 +155,7 @@ app
   })
   .put(async (req, res) => {
     try {
-      const response = await axios.put(SERVICES.AUTH + "/me", req.body, { headers: { "x-user-id": req.user.id } });
+      const response = await AUTH.put("/me", req.body, { headers: { "x-user-id": req.user.id } });
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -167,7 +167,7 @@ app
   })
   .delete(async (req, res) => {
     try {
-      const response = await axios.delete(SERVICES.AUTH + "/me", { data: req.body, headers: { "x-user-id": req.user.id } });
+      const response = await AUTH.delete("/me", { data: req.body, headers: { "x-user-id": req.user.id } });
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -193,7 +193,7 @@ app.use(roleMiddleware(["admin"]));
 // ! Routes for admins below.
 app.route("/logs").get(async (req, res) => {
   try {
-    const response = await axios.get(SERVICES.LOGS + "/logs", { params: req.query });
+    const response = await LOGS.get("/logs", { params: req.query });
     return res.status(response.status).json(response.data);
   } catch (error) {
     if (error.response) {
@@ -230,7 +230,7 @@ app
   .route("/users")
   .get(async (req, res) => {
     try {
-      const response = await axios.get(SERVICES.AUTH + "/users", { params: req.query });
+      const response = await AUTH.get("/users", { params: req.query });
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -242,7 +242,7 @@ app
   })
   .post(async (req, res) => {
     try {
-      const response = await axios.post(SERVICES.AUTH + "/users", req.body);
+      const response = await AUTH.post("/users", req.body);
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -254,7 +254,7 @@ app
   })
   .put(async (req, res) => {
     try {
-      const response = await axios.put(SERVICES.AUTH + "/users", req.body);
+      const response = await AUTH.put("/users", req.body);
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -266,7 +266,7 @@ app
   })
   .patch(async (req, res) => {
     try {
-      const response = await axios.patch(SERVICES.AUTH + "/users", req.body);
+      const response = await AUTH.patch("/users", req.body);
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -278,7 +278,7 @@ app
   })
   .delete(async (req, res) => {
     try {
-      const response = await axios.delete(SERVICES.AUTH + "/users", { data: req.body });
+      const response = await AUTH.delete("/users", { data: req.body });
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -297,7 +297,7 @@ app
   .route("/products")
   .post(async (req, res) => {
     try {
-      const response = await axios.post(SERVICES.PRODUCTS + "/products", req.body);
+      const response = await PRODUCTS.post("/products", req.body);
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -309,7 +309,7 @@ app
   })
   .patch(async (req, res) => {
     try {
-      const response = await axios.patch(SERVICES.PRODUCTS + "/products", req.body);
+      const response = await PRODUCTS.patch("/products", req.body);
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -321,7 +321,7 @@ app
   })
   .put(async (req, res) => {
     try {
-      const response = await axios.put(SERVICES.PRODUCTS + "/products", req.body);
+      const response = await PRODUCTS.put("/products", req.body);
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {
@@ -333,7 +333,7 @@ app
   })
   .delete(async (req, res) => {
     try {
-      const response = await axios.delete(SERVICES.PRODUCTS + "/products", { data: req.body });
+      const response = await PRODUCTS.delete("/products", { data: req.body });
       return res.status(response.status).json(response.data);
     } catch (error) {
       if (error.response) {

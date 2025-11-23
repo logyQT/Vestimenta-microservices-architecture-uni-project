@@ -1,10 +1,8 @@
 import { Product, User, Order } from "../types";
 import axios from "axios";
 
-const BASE_URL = "http://localhost:4000";
-
 const client = axios.create({
-  baseURL: BASE_URL,
+  baseURL: "http://localhost:4000",
   headers: {
     "Content-Type": "application/json",
   },
@@ -104,7 +102,7 @@ export const api = {
   products: {
     getAll: async (): Promise<Product[]> => {
       try {
-        const response = await client.get(`${BASE_URL}/products`);
+        const response = await client.get("/products");
         return response.data;
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -113,7 +111,7 @@ export const api = {
     },
     getById: async (id: number): Promise<Product | undefined> => {
       try {
-        const response = await client.get(`${BASE_URL}/products`, { params: { id } });
+        const response = await client.get("/products", { params: { id } });
         return response.data;
       } catch (error) {
         console.error("Error fetching product by ID:", error);
