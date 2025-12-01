@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route, useLocation } from "react-router-dom";
+import { HashRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Navbar } from "./components/layout/Navbar";
 import { Footer } from "./components/layout/Footer";
@@ -16,6 +16,7 @@ import { Profile } from "./pages/Profile";
 import { Checkout } from "./pages/Checkout";
 import { About, Contact } from "./pages/StaticPages";
 import { TermsOfService, PrivacyPolicy } from "./pages/Legal";
+import { AdminDashboard } from "./pages/AdminDashboard";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -47,6 +48,8 @@ export default function App() {
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/legal/terms" element={<TermsOfService />} />
                 <Route path="/legal/privacy" element={<PrivacyPolicy />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
             <Footer />

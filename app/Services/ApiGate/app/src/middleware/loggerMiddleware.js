@@ -1,6 +1,11 @@
 const axios = require("axios");
 
-const LOGS_URL = process.env.SERVICES_LOGS || "http://localhost:4001";
+const LOGS_URL = require("../config").SERVICES.LOGS;
+
+const client = axios.create({
+  baseURL: LOGS_URL,
+  timeout: 5000,
+});
 
 const requestLogger = (req, res, next) => {
   const start = performance.now();
@@ -19,7 +24,7 @@ const requestLogger = (req, res, next) => {
     const message = `${method} ${url} ${status} - ${duration}ms - User: ${user}`;
 
     try {
-      await axios.post(`${LOGS_URL}/logs`, {
+      await client.post("/logs", {
         level,
         message,
         source: "API_GATEWAY",

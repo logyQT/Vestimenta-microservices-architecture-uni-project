@@ -1,10 +1,8 @@
 const express = require("express");
-const cors = require("cors");
 const PORT = process.env.PORT || 4003;
 const app = express();
 const product = require("./src/product.model");
 
-app.use(cors());
 app.use(express.json());
 
 app.route("/health").get((req, res) => {
@@ -23,8 +21,10 @@ app
     return res.status(200).json(products);
   })
   .post(async (req, res) => {
-    const { name, description, category, price, image, images, is_new, sizes } = req.body;
-    if (!name || !price || !description || !category || !image || !sizes || !is_new) {
+    console.log("Creating product with data:", req.body);
+    const { name, description, category, price, image, images, isNew, sizes } = req.body;
+    if (!name || !price || !description || !category || !image || !sizes || !isNew) {
+      console.error("Missing required fields for product creation.");
       return res.status(400).json({ error: "Name and price are required." });
     }
     const newProduct = await product.create({
@@ -34,14 +34,14 @@ app
       price,
       image,
       images,
-      is_new,
+      isNew,
       sizes,
     });
 
     res.status(201).json(newProduct);
   })
   .patch(async (req, res) => {
-    const { id, name, description, category, price, image, images, is_new, sizes } = req.body;
+    const { id, name, description, category, price, image, images, isNew, sizes } = req.body;
     if (!id) {
       return res.status(400).json({ error: "Product ID is required for update." });
     }
@@ -54,7 +54,7 @@ app
     if (category) _product.category = category;
     if (image) _product.image = image;
     if (images) _product.images = images;
-    if (is_new !== undefined) _product.is_new = is_new;
+    if (isNew !== undefined) _product.isNew = isNew;
     if (price) _product.price = price;
     if (sizes) _product.sizes = sizes;
 
@@ -62,8 +62,8 @@ app
     res.status(200).json(updatedProduct);
   })
   .put((req, res) => {
-    const { id, name, description, category, price, image, images, is_new, sizes } = req.body;
-    if (!id || !name || !price || !description || !category || !image || !sizes || is_new === undefined) {
+    const { id, name, description, category, price, image, images, isNew, sizes } = req.body;
+    if (!id || !name || !price || !description || !category || !image || !sizes || isNew === undefined) {
       return res.status(400).json({ error: "All product fields are required for full update." });
     }
     const updatedProduct = product.updateById(id, {
@@ -73,7 +73,7 @@ app
       price,
       image,
       images,
-      is_new,
+      isNew,
       sizes,
     });
     res.status(200).json(updatedProduct);

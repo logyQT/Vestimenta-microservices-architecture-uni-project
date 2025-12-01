@@ -1,6 +1,11 @@
 const axios = require("axios");
 
-const AUTH_SERVICE_URL = "http://localhost:4002/verify";
+const AUTH_SERVICE_URL = require("../config").SERVICES.AUTH;
+
+const client = axios.create({
+  baseURL: AUTH_SERVICE_URL,
+  timeout: 5000,
+});
 
 const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -16,7 +21,7 @@ const authMiddleware = async (req, res, next) => {
   }
 
   try {
-    const response = await axios.post(AUTH_SERVICE_URL, { token });
+    const response = await client.post("/verify", { token });
 
     const userData = response.data;
 

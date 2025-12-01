@@ -1,4 +1,4 @@
-import { Product, User, Order } from "../types";
+import { Product, User, Order, LogEntry, LogFilters } from "../types";
 import axios from "axios";
 
 const client = axios.create({
@@ -6,6 +6,14 @@ const client = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+});
+
+client.interceptors.request.use((config) => {
+  const token = localStorage.getItem("vestimenta_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 // --- Mock Data ---
@@ -118,9 +126,31 @@ export const api = {
         return undefined;
       }
     },
+    // Admin: Create
+    create: async (product: Omit<Product, "id">): Promise<Product> => {
+      const response = await client.post("/products", product);
+      return response.data;
+    },
+    // Admin: Update
+    update: async (id: number, updates: Partial<Product>): Promise<Product> => {
+      // Backend expects ID in the body for PATCH
+      const response = await client.patch("/products", { id, ...updates });
+      return response.data;
+    },
+    // Admin: Delete
+    delete: async (id: number): Promise<void> => {
+      // Backend expects ID in the body for DELETE (axios delete uses 'data' config)
+      await client.delete("/products", { data: { id } });
+    },
     getTrending: async (): Promise<Product[]> => {
-      await delay(400);
-      return PRODUCTS.filter((p) => p.isNew || p.price > 1000).slice(0, 4);
+      // Fallback logic if backend doesn't have a specific trending endpoint yet
+      // We fetch all and filter locally for now to keep the frontend working
+      try {
+        const all = await api.products.getAll();
+        return all.filter((p) => p.isNew || p.price > 1000).slice(0, 4);
+      } catch (e) {
+        return [];
+      }
     },
   },
   auth: {
@@ -159,6 +189,7 @@ export const api = {
             Authorization: `Bearer ${token}`,
           },
         });
+        // const response = await client.get("/verify");
         return response.data.user;
       } catch (error: any) {
         throw new Error("Session invalid");
@@ -178,6 +209,31 @@ export const api = {
       } catch (error: any) {
         console.error("Profile update error:", error.response?.data || error.message);
         throw new Error(error.response?.data?.error || "Profile update failed");
+      }
+    },
+  },
+  admin: {
+    getLogs: async (filters: LogFilters = {}): Promise<LogEntry[]> => {
+      try {
+        const params: any = {};
+        if (filters.level) params.level = filters.level;
+        if (filters.source) params.source = filters.source;
+        if (filters.limit) params.limit = filters.limit;
+
+        const response = await client.get("/logs", { params });
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching logs:", error);
+        return [];
+      }
+    },
+    getAllUsers: async (): Promise<User[]> => {
+      try {
+        const response = await client.get("/users");
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        return [];
       }
     },
   },

@@ -6,7 +6,7 @@ const ProductModel = {
 
     const query = `
       INSERT INTO products 
-      (name, description, category, price, image, images, is_new, sizes) 
+      (name, description, category, price, image, images, isNew, sizes) 
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
       RETURNING *;
     `;
@@ -49,9 +49,9 @@ const ProductModel = {
       fields.push(`images = $${index++}`);
       values.push(JSON.stringify(product.images));
     }
-    if (product.is_new !== undefined) {
-      fields.push(`is_new = $${index++}`);
-      values.push(product.is_new);
+    if (product.isNew !== undefined) {
+      fields.push(`isNew = $${index++}`);
+      values.push(product.isNew);
     }
     if (product.sizes) {
       fields.push(`sizes = $${index++}`);
@@ -78,6 +78,10 @@ const ProductModel = {
     const query = `SELECT * FROM products WHERE id = $1;`;
     const { rows } = await db.query(query, [id]);
     return rows[0];
+  },
+  async deleteById(id) {
+    const query = `DELETE FROM products WHERE id = $1;`;
+    await db.query(query, [id]);
   },
 };
 

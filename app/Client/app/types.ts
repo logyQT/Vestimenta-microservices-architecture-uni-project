@@ -10,6 +10,20 @@ export interface Product {
   sizes?: string[];
 }
 
+export interface LogEntry {
+  level: string;
+  message: string;
+  source: string;
+  timestamp: number;
+  metadata?: any;
+}
+
+export interface LogFilters {
+  level?: string;
+  source?: string;
+  limit?: number;
+}
+
 export interface User {
   id: string;
   username: string;

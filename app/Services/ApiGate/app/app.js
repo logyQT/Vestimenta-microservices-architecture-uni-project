@@ -1,18 +1,13 @@
+const SERVICES = require("./src/config").SERVICES;
+const PORT = require("./src/config").API_GATE_PORT;
+
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 const authMiddleware = require("./src/middleware/authMiddleware");
 const roleMiddleware = require("./src/middleware/roleMiddleware");
 const loggerMiddleware = require("./src/middleware/loggerMiddleware");
-
 const app = express();
-const PORT = 4000;
-
-const SERVICES = {
-  LOGS: process.env.LOGS_SERVICE_URL || "http://localhost:4001",
-  AUTH: process.env.AUTH_SERVICE_URL || "http://localhost:4002",
-  PRODUCTS: process.env.PRODUCTS_SERVICE_URL || "http://localhost:4003",
-};
 
 const LOGS = axios.create({
   baseURL: SERVICES.LOGS,
@@ -27,12 +22,8 @@ const PRODUCTS = axios.create({
   timeout: 5000,
 });
 
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || "*",
-    credentials: true,
-  })
-);
+app.use(cors());
+
 app.use(express.json());
 
 app.use(loggerMiddleware);

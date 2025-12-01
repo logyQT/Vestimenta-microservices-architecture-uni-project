@@ -2,10 +2,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 import { Order } from "../types";
-import { Package, User as UserIcon, LogOut, SquarePen, Check, Lock, AlertCircle, X } from "lucide-react";
+import { Package, User as UserIcon, LogOut, SquarePen, Check, Lock, AlertCircle, X, LockKeyhole } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "../utils/utils";
-
 export function Profile() {
   const { user, logout, updateUser } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -186,6 +185,11 @@ export function Profile() {
             <button onClick={() => setActiveTab("details")} className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${activeTab === "details" ? "bg-gold-500 text-black font-medium" : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"}`}>
               <UserIcon className="w-4 h-4" /> Personal Details
             </button>
+            {user.role === "admin" && (
+              <button onClick={() => navigate("/admin")} className="w-full flex items-center gap-3 px-4 py-3 text-sm bg-zinc-900 text-zinc-400 hover:bg-zinc-800 transition-colors">
+                <LockKeyhole className="w-4 h-4" /> Admin Dashboard
+              </button>
+            )}
           </div>
 
           {/* Content */}

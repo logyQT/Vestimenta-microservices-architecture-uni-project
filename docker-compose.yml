@@ -39,7 +39,6 @@ services:
   # ---------------------------
   auth-seed:
     build: ./app/Services/AuthAPI
-    # Override command to run the seed script
     command: npm run init-db
     environment:
       DB_HOST: auth-db
@@ -51,7 +50,6 @@ services:
         condition: service_healthy
     networks:
       - internal_net
-    # We use a profile so these don't auto-start on 'docker-compose up'
     profiles: ["init"]
 
   products-seed:
@@ -118,7 +116,6 @@ services:
       AUTH_SERVICE_URL: http://auth-service:4002
       LOGS_SERVICE_URL: http://logging-service:4001
       PRODUCTS_SERVICE_URL: http://products-service:4003
-      # The frontend URL from the user's browser perspective
       CLIENT_URL: "http://localhost"
     depends_on:
       - auth-service

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, ShoppingBag, User } from "lucide-react";
+import { Menu, X, ShoppingBag, User, ShieldCheck } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { ProfileDropdown } from "./ProfileDropdown";
 import { useAuth } from "../../context/AuthContext";
@@ -50,10 +50,24 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <Link to="/shop" className="text-zinc-400 hover:text-gold-500 transition-colors duration-300 uppercase text-xs tracking-widest">Shop</Link>
-            <Link to="/shop?category=For%20Her" className="text-zinc-400 hover:text-gold-500 transition-colors duration-300 uppercase text-xs tracking-widest">For Her</Link>
-            <Link to="/shop?category=For%20Him" className="text-zinc-400 hover:text-gold-500 transition-colors duration-300 uppercase text-xs tracking-widest">For Him</Link>
-            <Link to="/shop?category=Accessories" className="text-zinc-400 hover:text-gold-500 transition-colors duration-300 uppercase text-xs tracking-widest">Accessories</Link>
+            <Link to="/shop" className="text-zinc-400 hover:text-gold-500 transition-colors duration-300 uppercase text-xs tracking-widest">
+              Shop
+            </Link>
+            <Link to="/shop?category=For%20Her" className="text-zinc-400 hover:text-gold-500 transition-colors duration-300 uppercase text-xs tracking-widest">
+              For Her
+            </Link>
+            <Link to="/shop?category=For%20Him" className="text-zinc-400 hover:text-gold-500 transition-colors duration-300 uppercase text-xs tracking-widest">
+              For Him
+            </Link>
+            <Link to="/shop?category=Accessories" className="text-zinc-400 hover:text-gold-500 transition-colors duration-300 uppercase text-xs tracking-widest">
+              Accessories
+            </Link>
+
+            {user?.role === "admin" && (
+              <Link to="/admin" className="text-gold-500 hover:text-white transition-colors duration-300 uppercase text-xs tracking-widest flex items-center gap-1 border border-gold-500/30 px-3 py-1 rounded-full bg-gold-500/5">
+                <ShieldCheck className="w-3 h-3" /> Admin
+              </Link>
+            )}
 
             <div className="h-4 w-[1px] bg-zinc-700"></div>
 
@@ -61,28 +75,16 @@ export function Navbar() {
             <div className="flex items-center gap-6">
               {/* Profile */}
               <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
-                <button 
-                  className="text-zinc-400 hover:text-gold-500 transition-colors duration-300 flex items-center" 
-                  onClick={() => !isAuthenticated && navigate("/login")}
-                >
+                <button className="text-zinc-400 hover:text-gold-500 transition-colors duration-300 flex items-center" onClick={() => !isAuthenticated && navigate("/login")}>
                   <User className="w-5 h-5" />
                 </button>
-                {showProfileDropdown && (
-                  <ProfileDropdown isLoggedIn={isAuthenticated} user={user} onLogout={onLogout} loading={loading} />
-                )}
+                {showProfileDropdown && <ProfileDropdown isLoggedIn={isAuthenticated} user={user} onLogout={onLogout} loading={loading} />}
               </div>
 
               {/* Cart */}
-              <button 
-                className="text-zinc-400 hover:text-gold-500 transition-colors duration-300 relative"
-                onClick={() => setIsCartOpen(true)}
-              >
+              <button className="text-zinc-400 hover:text-gold-500 transition-colors duration-300 relative" onClick={() => setIsCartOpen(true)}>
                 <ShoppingBag className="w-5 h-5" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-gold-500 text-black text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
+                {cartCount > 0 && <span className="absolute -top-2 -right-2 bg-gold-500 text-black text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{cartCount}</span>}
               </button>
             </div>
           </div>
@@ -95,15 +97,32 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         <div className={`fixed inset-0 bg-dark-900 z-40 transition-transform duration-500 md:hidden ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
-           <div className="flex flex-col items-center justify-center h-full gap-8 text-center p-6">
-              <Link to="/shop" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-serif text-white hover:text-gold-500">Shop All</Link>
-              <Link to="/shop?category=For%20Her" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-serif text-white hover:text-gold-500">For Her</Link>
-              <Link to="/shop?category=For%20Him" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-serif text-white hover:text-gold-500">For Him</Link>
-              <div className="h-[1px] w-20 bg-zinc-800 my-4"></div>
-              <button onClick={() => { setIsMobileMenuOpen(false); isAuthenticated ? navigate("/profile") : navigate("/login"); }} className="text-zinc-400 hover:text-white flex items-center gap-2">
-                <User className="w-5 h-5" /> {isAuthenticated ? "My Account" : "Sign In"}
-              </button>
-           </div>
+          <div className="flex flex-col items-center justify-center h-full gap-8 text-center p-6">
+            <Link to="/shop" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-serif text-white hover:text-gold-500">
+              Shop All
+            </Link>
+            <Link to="/shop?category=For%20Her" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-serif text-white hover:text-gold-500">
+              For Her
+            </Link>
+            <Link to="/shop?category=For%20Him" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-serif text-white hover:text-gold-500">
+              For Him
+            </Link>
+            {user?.role === "admin" && (
+              <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-serif text-gold-500 hover:text-white border border-gold-500 px-6 py-2">
+                Admin Dashboard
+              </Link>
+            )}
+            <div className="h-[1px] w-20 bg-zinc-800 my-4"></div>
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                isAuthenticated ? navigate("/profile") : navigate("/login");
+              }}
+              className="text-zinc-400 hover:text-white flex items-center gap-2"
+            >
+              <User className="w-5 h-5" /> {isAuthenticated ? "My Account" : "Sign In"}
+            </button>
+          </div>
         </div>
       </div>
     </nav>

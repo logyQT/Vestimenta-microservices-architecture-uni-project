@@ -1,5 +1,4 @@
 const express = require("express");
-const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const user = require("./src/user.model");
 const app = express();
@@ -79,7 +78,6 @@ app.route("/verify").post((req, res) => {
       message: "Token is valid.",
     });
   } catch (err) {
-    console.error("Could not verify token:", err.message);
     return res.status(401).json({ error: "Invalid or expired token." });
   }
 });

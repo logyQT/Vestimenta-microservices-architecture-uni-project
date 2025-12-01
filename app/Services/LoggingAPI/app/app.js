@@ -1,11 +1,9 @@
 const express = require("express");
-const cors = require("cors");
 const PORT = process.env.PORT || 4001;
 const app = express();
 
 let logs = [];
 
-app.use(cors());
 app.use(express.json());
 
 app
