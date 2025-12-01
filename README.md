@@ -84,8 +84,6 @@ Projekt wykorzystuje strukturę typu monorepo. Należy zainstalować zależnośc
     - **Frontend:** Dostępny pod `http://localhost:5173` (Vite dev server)
     - **API Gateway:** Dostępny pod `http://localhost:4000`
 
----
-
 <div style="page-break-after: always"></div>
 
 ## 2. Uruchomienie środowiska produkcyjnego
@@ -120,13 +118,13 @@ Projekt wykorzystuje strukturę typu monorepo. Należy zainstalować zależnośc
     docker-compose down -v
     ```
 
----
-
 <div style="page-break-after: always"></div>
 
 ## 3. Stos technologiczny i Architektura
 
 ---
+
+![alt text](./local/diagram_arch.png)
 
 Projekt realizuje wzorzec architektury mikroserwisowej z centralnym punktem dostępu (API Gateway) oraz separacją warstwy prezentacji.
 
@@ -170,6 +168,23 @@ W środowisku Docker Compose serwisy komunikują się w dedykowanej sieci wewnę
 - `api-gateway` widzi serwisy pod ich nazwami hostów: `http://auth-service:4002`, `http://products-service:4003`, etc.
 - Frontend komunikuje się wyłącznie z Nginx (port 80).
 
+### Przykładowa sekwencja żądania
+
+Poniższy diagram sekwencji przedstawia pełny cykl życia żądania POST /products, od inicjacji przez klienta (Administratora) aż do zapisu danych w bazie i finalnej odpowiedzi. Diagram ilustruje kluczową rolę API Gateway jako koordynatora przepływu, który zarządza uwierzytelnianiem, autoryzacją i monitorowaniem.
+
+Opis Przepływu
+Weryfikacja Tożsamości i Roli: Żądanie jest natychmiast przechwytywane przez Auth Middleware, który wykonuje synchroniczny zwrot (bounce back) do Auth Service (Krok 3) w celu walidacji tokena JWT i pobrania roli użytkownika. Dopiero po potwierdzeniu ważności tokena, Role Middleware sprawdza, czy użytkownik posiada wymaganą rolę (admin). Ten etap blokuje dalsze przetwarzanie do czasu pomyślnej autoryzacji.
+
+Logika Biznesowa: Po autoryzacji, API Gateway przekazuje (forwarduje) żądanie do docelowego Products Service, który wykonuje operację zapisu w Products DB.
+
+Asynchroniczne Logowanie: Po pomyślnym wykonaniu operacji przez Products Service (Krok 8) i przygotowaniu odpowiedzi dla klienta (np. 201 Created), ApiGateway inicjuje asynchroniczne (nieblokujące) wywołanie Logging Service (Krok 10). Oznacza to, że log systemowy jest zapisywany w tle, a klient otrzymuje odpowiedź, minimalizując opóźnienie.
+
+Aby żądanie POST /products zakończyło się sukcesem, muszą zostać spełnione dwa krytyczne warunki, które są egzekwowane w API Gateway:
+Uwierzytelnienie (Authentication): Klient musi dołączyć ważny token JWT w nagłówku Authorization.
+Autoryzacja (Authorization): Użytkownik zaszyty w tokenie musi posiadać rolę admin, uprawniającą go do tworzenia nowych produktów.
+
+![alt text](./local/diagram_sek.png)
+
 ### Rola serwera Nginx
 
 W środowisku produkcyjnym Nginx pełni podwójną rolę (zdefiniowaną w `nginx.conf`):
@@ -178,8 +193,6 @@ W środowisku produkcyjnym Nginx pełni podwójną rolę (zdefiniowaną w `nginx
 2.  **Reverse Proxy:** Przekierowuje zapytania zaczynające się od `/api/` do kontenera `api-gateway` na port `4000`.
     - Dzięki temu omijane są problemy z **CORS** (Same-Origin Policy), ponieważ zarówno frontend, jak i API są dostępne pod tą samą domeną/portem.
     - W Dockerfile klienta następuje podmiana `base URL` w pliku `api.ts` z `http://localhost:4000` na relatywną ścieżkę `/api`, co umożliwia poprawne routowanie przez Nginx.
-
----
 
 <div style="page-break-after: always"></div>
 

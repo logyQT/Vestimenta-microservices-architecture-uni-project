@@ -3,10 +3,11 @@ import { api } from "../services/api";
 import { LogEntry } from "../types";
 import { Product, User } from "../types";
 import { LayoutDashboard, Package, Users, Activity, Edit, Trash2, Plus, Save, X, RefreshCw } from "lucide-react";
-// Fixed imports relative to pages folder
 import { ImageWithFallback } from "../components/shared/ImageWithFallback";
-// Fixed import relative to pages folder (utils is at app/utils/utils.ts)
 import { formatDate } from "../utils/utils";
+
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 // --- Components ---
 
@@ -21,6 +22,24 @@ const Badge = ({ children, color }: { children: React.ReactNode; color: string }
 
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"logs" | "products" | "users">("logs");
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user || user.role !== "admin") {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [user, loading, navigate]);
+
+  if (loading || !user || user.role !== "admin") {
+    return (
+      <div className="min-h-screen bg-black pt-16 flex items-center justify-center">
+        <div className="text-zinc-500">Checking authorization...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black pt-16 pb-12">
