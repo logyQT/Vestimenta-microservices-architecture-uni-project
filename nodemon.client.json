@@ -1,5 +1,0 @@
-{
-  "watch": ["./app/Client/"],
-  "ext": "tsx,json,css,html,ts",
-  "exec": "npm --prefix ./app/Client run dev"
-}

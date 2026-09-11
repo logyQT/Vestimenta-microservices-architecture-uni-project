@@ -1,7 +1,0 @@
-{
-  "watch": ["./app/Services/ProductsAPI/app/"],
-  "execMap": {
-    "js": "node"
-  },
-  "ext": "js,json"
-}

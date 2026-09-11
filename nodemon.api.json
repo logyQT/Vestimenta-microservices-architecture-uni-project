@@ -1,7 +1,0 @@
-{
-  "watch": ["./app/Services/ApiGate/app/"],
-  "execMap": {
-    "js": "node"
-  },
-  "ext": "js,json"
-}

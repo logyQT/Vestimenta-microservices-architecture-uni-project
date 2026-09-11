@@ -4,16 +4,15 @@
   "description": "API Gateway and Microservices Project",
   "main": "",
   "scripts": {
-    "start:logs": "nodemon --config nodemon.logs.json ./app/Services/LoggingAPI/app/app.js",
-    "start:api": "nodemon --config nodemon.api.json ./app/Services/ApiGate/app/app.js",
-    "start:auth": "nodemon --config nodemon.auth.json ./app/Services/AuthAPI/app/app.js",
-    "start:products": "nodemon --config nodemon.products.json ./app/Services/ProductsAPI/app/app.js",
-    "start:client": "nodemon --config nodemon.client.json",
+    "start:logs": "node --watch ./app/Services/LoggingAPI/app/app.js",
+    "start:api": "node --watch ./app/Services/ApiGate/app/app.js",
+    "start:auth": "node --watch ./app/Services/AuthAPI/app/app.js",
+    "start:products": "node --watch ./app/Services/ProductsAPI/app/app.js",
+    "start:client": "npm --prefix ./app/Client run dev",
     "dev": "concurrently --names \"LOGS,API,AUTH,PRODUCTS,CLIENT\" --prefix-colors \"bgBlue.bold,bgGreen.bold,bgMagenta.bold,bgYellow.bold,bgCyan.bold\" \"npm run start:logs\" \"npm run start:api\" \"npm run start:auth\" \"npm run start:products\" \"npm run start:client\"",
     "init-db": "node ./app/Services/ProductsAPI/app/src/_seedDatabase.js && node ./app/Services/AuthAPI/app/src/_seedDatabase.js"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "nodemon": "^3.1.0"
+    "concurrently": "^10.0.5"
   }
 }

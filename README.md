@@ -1,277 +1,352 @@
-# Vestimenta - Luxury Fashion E-commerce System
+# Vestimenta — Luxury Fashion E-commerce System
 
-Projekt to aplikacja e-commerce oparta na architekturze mikroserwisów, w której `API Gateway` działa jako centralny punkt dostępu do systemu. Poszczególne serwisy domenowe (np. obsługa produktów, zamówień czy użytkowników) funkcjonują jako niezależne komponenty uruchamiane w kontenerach Docker, komunikujące się przez lekkie interfejsy HTTP.
-Warstwę prezentacji stanowi frontend zbudowany w React, który łączy dane z wielu usług i prezentuje je użytkownikowi w spójny sposób.
-Projekt został przygotowany jako praca zaliczeniowa z przedmiotu Przetwarzanie Rozproszone, demonstrując praktyczne zastosowanie architektury rozproszonej w środowisku `Node.js` i `Docker`, wraz z konfiguracją kluczowych wzorców takich jak API Gateway, separacja domen czy konteneryzacja usług.
+A microservices-based e-commerce application where an **API Gateway** serves as the central access point. Domain services (products, orders, users) run as independent Docker containers communicating via lightweight HTTP interfaces. The presentation layer is a React frontend that aggregates data from multiple services and presents it to the user.
 
-## Link do repo -> [tutaj](https://github.com/logyQT/PR_Projekt_GK) <-
+This project was developed as a coursework assignment for a Distributed Systems course, demonstrating practical application of distributed architecture in a `Node.js` and `Docker` environment, implementing key patterns such as API Gateway, domain separation, and service containerization.
 
-# Spis treści
+**Repository:** [Vestimenta-microservices-architecture-uni-project](https://github.com/logyQT/Vestimenta-microservices-architecture-uni-project)
 
-## 1. [Uruchomienie środowiska developerskiego (Local Development)](#1-uruchomienie-środowiska-developerskiego)
+## Table of Contents
 
-## 2. [Uruchomienie środowiska produkcyjnego (Docker Compose)](#2-uruchomienie-środowiska-produkcyjnego)
+1. [Local Development Setup](#1-local-development-setup)
+2. [Production Environment (Docker Compose)](#2-production-environment-docker-compose)
+3. [Tech Stack & Architecture](#3-tech-stack--architecture)
+4. [API Documentation](#4-api-documentation)
+5. [Application Demo](#5-application-demo)
 
-## 3. [Stos technologiczny i Architektura (Tech Stack)](#3-stos-technologiczny-i-architektura)
+## 1. Local Development Setup
 
-## 4. [Dokumentacja API (API Docs)](#4-opis-endpointów)
+To run the project locally without containerization, manual database configuration and Node.js dependency installation for each service are required.
 
-## 5. [Prezentacja działania aplikacji (wg wymagań projektowych)](#5-prezentacja-działania-aplikacji)
+### Prerequisites
 
-<div style="page-break-after: always"></div>
+- **Node.js** (v18 or later)
+- **PostgreSQL** (running on port `5432`)
 
-## 1. Uruchomienie środowiska developerskiego
+### Database Configuration
 
----
+The project requires two separate PostgreSQL databases. Create them manually using your preferred SQL client (e.g., pgAdmin, psql):
 
-Aby uruchomić projekt lokalnie bez konteneryzacji, wymagana jest manualna konfiguracja bazy danych oraz instalacja zależności Node.js dla każdego serwisu.
+1. User database: `auth_db`
+2. Products database: `products_db`
 
-### Wymagania wstępne
-
-- **Node.js** (v18 lub nowszy)
-- **PostgreSQL** (działający na porcie `5432`)
-
-### Konfiguracja Bazy Danych
-
-Projekt wymaga dwóch osobnych baz danych PostgreSQL. Należy je utworzyć ręcznie w swoim kliencie SQL (np. pgAdmin, psql):
-
-1.  Baza danych użytkowników: `auth_db`
-2.  Baza danych produktów: `products_db`
-
-> **Domyślna konfiguracja połączenia** (zdefiniowana w plikach `database.js`):
+> **Default connection settings** (defined in `database.js` files):
 >
 > - Host: `localhost`
 > - User: `postgres`
 > - Password: `password`
 > - Port: `5432`
 >
-> _Jeśli lokalna konfiguracja Postgresa różni się od powyższej, należy ustawić odpowiednie zmienne środowiskowe (np. `DB_USER`, `DB_PASSWORD`) przed uruchomieniem serwisów._
+> _If your local PostgreSQL configuration differs, set the appropriate environment variables (e.g., `DB_USER`, `DB_PASSWORD`) before starting the services._
 
-### Instalacja i Uruchomienie
+### Installation & Running
 
-Projekt wykorzystuje strukturę typu monorepo. Należy zainstalować zależności dla każdego mikroserwisu oraz klienta, a następnie uruchomić całość za pomocą skryptu orkiestrującego w głównym katalogu.
+The project uses a monorepo structure. Install dependencies for each microservice and the client, then start everything using the orchestration script in the root directory.
 
-1.  **Instalacja zależności:**
-    Należy wejść do każdego katalogu i wykonać `npm install`:
+1. **Install dependencies:**
 
-    ```bash
-    # Główny katalog (dla narzędzi deweloperskich jak nodemon/concurrently)
-    npm install
+   Navigate to each directory and run `npm install`:
 
-    # Serwisy
-    cd app/Services/ApiGate && npm install
-    cd ../AuthAPI && npm install
-    cd ../ProductsAPI && npm install
-    cd ../LoggingAPI && npm install
+   ```bash
+   # Root directory (for concurrently)
+   npm install
 
-    # Frontend
-    cd ../../Client && npm install
-    ```
+   # Services
+   cd app/Services/ApiGate && npm install
+   cd ../AuthAPI && npm install
+   cd ../ProductsAPI && npm install
+   cd ../LoggingAPI && npm install
 
-2.  **Seedowanie bazy danych (Inicjalizacja danych):**
-    Uruchom skrypt, który utworzy tabele i doda przykładowe dane (użytkowników i produkty).
+   # Frontend
+   cd ../../Client && npm install
+   ```
 
-    ```bash
-    # Z głównego katalogu projektu
-    npm run init-db
-    ```
+2. **Seed the database:**
 
-3.  **Start aplikacji:**
-    Uruchomienie wszystkich serwisów oraz frontendu w trybie `watch` (z wykorzystaniem `concurrently` i `nodemon`):
-    ```bash
-    npm run dev
-    ```
-    - **Frontend:** Dostępny pod `http://localhost:5173` (Vite dev server)
-    - **API Gateway:** Dostępny pod `http://localhost:4000`
+   Run the script to create tables and populate them with sample data (users and products):
 
-<div style="page-break-after: always"></div>
+   ```bash
+   npm run init-db
+   ```
 
-## 2. Uruchomienie środowiska produkcyjnego
+3. **Start the application:**
 
----
+   Launches all services and the frontend in watch mode using `concurrently` and Node.js built-in `--watch`:
 
-Środowisko produkcyjne jest w pełni skonteneryzowane przy użyciu **Docker** oraz **Docker Compose**. Zapewnia to izolację serwisów w wewnętrznej sieci oraz automatyczną konfigurację baz danych.
+   ```bash
+   npm run dev
+   ```
 
-### Instrukcja uruchomienia
+   - **Frontend:** [http://localhost:5173](http://localhost:5173) (Vite dev server)
+   - **API Gateway:** [http://localhost:4000](http://localhost:4000)
 
-1.  **Zbudowanie i uruchomienie kontenerów:**
-    Polecenie to buduje obrazy dla Clienta i Serwisów, a następnie uruchamia je w tle.
+## 2. Production Environment (Docker Compose)
 
-    ```bash
-    docker-compose up -d --build
-    ```
+The production environment is fully containerized using **Docker** and **Docker Compose**, providing service isolation on an internal network with automatic database configuration.
 
-2.  **Inicjalizacja baz danych (Seeding):**
-    Kontenery `auth-seed` oraz `products-seed` są zdefiniowane w profilu `init`, więc nie uruchamiają się automatycznie. Należy je wywołać ręcznie, aby zaludnić bazy danych działające w kontenerach `auth-db` i `products-db`.
+### Instructions
 
-    ```bash
-    docker-compose run --rm auth-seed
-    docker-compose run --rm products-seed
-    ```
+1. **Build and start containers:**
 
-3.  **Dostęp do aplikacji:**
-    Aplikacja jest dostępna pod adresem: **`http://localhost`** (obsługiwana przez serwer Nginx na porcie 80).
+   ```bash
+   docker-compose up -d --build
+   ```
 
-4.  **Zatrzymanie środowiska:**
-    Aby zatrzymać kontenery i usunąć wolumeny (wyczyszczenie danych):
-    ```bash
-    docker-compose down -v
-    ```
+2. **Seed databases:**
 
-<div style="page-break-after: always"></div>
+   The `auth-seed` and `products-seed` containers are defined in the `init` profile and do not start automatically. Run them manually to populate the databases:
 
-## 3. Stos technologiczny i Architektura
+   ```bash
+   docker-compose run --rm auth-seed
+   docker-compose run --rm products-seed
+   ```
 
----
+3. **Access the application:**
 
-![alt text](./local/diagram_arch.png)
+   The application is available at **`http://localhost`** (served by Nginx on port 80).
 
-Projekt realizuje wzorzec architektury mikroserwisowej z centralnym punktem dostępu (API Gateway) oraz separacją warstwy prezentacji.
+4. **Stop the environment:**
+
+   ```bash
+   docker-compose down -v
+   ```
+
+## 3. Tech Stack & Architecture
+
+```mermaid
+graph TB
+    Browser["🌐 Browser"]
+
+    subgraph Docker["Docker Environment"]
+        Nginx["🔀 Nginx<br/>(Reverse Proxy)"]
+
+        subgraph Presentation["Presentation Layer"]
+            Frontend["⚛️ Frontend<br/>React/TypeScript SPA"]
+        end
+
+        subgraph GatewayLayer["API Gateway"]
+            APIGateway["🚀 API Gateway<br/>(Central Access Point)"]
+            AuthMW["Auth/Role Middleware<br/>(JWT Validation)"]
+            LoggerMW["Logger Middleware<br/>(Async Logging)"]
+        end
+
+        subgraph Services["Docker Internal Network"]
+            AuthService["🔑 AuthService"]
+            ProductsService["📦 ProductsService"]
+            LogsService["📝 LogsService"]
+        end
+
+        subgraph Storage["Storage"]
+            auth_db[("auth_db")]
+            products_db[("products_db")]
+            memstore[("In-Memory Storage")]
+        end
+    end
+
+    Browser -- "API Requests" --> Nginx
+    Nginx -- "Static Files" --> Frontend
+    Nginx -- "API Requests" --> APIGateway
+
+    APIGateway --> AuthMW
+    APIGateway --> LoggerMW
+    LoggerMW -. "Async logs" .-> LogsService
+
+    APIGateway -- "/login, /register" --> AuthService
+    APIGateway -- "/products" --> ProductsService
+    APIGateway -- "/logs" --> LogsService
+
+    AuthService --> auth_db
+    ProductsService --> products_db
+    LogsService --> memstore
+
+    classDef presentation fill:#E6E6FA,stroke:#9370DB,stroke-width:2px
+    classDef gateway fill:#FFFACD,stroke:#DAA520,stroke-width:2px
+    classDef service fill:#FFE4E1,stroke:#CD5C5C,stroke-width:2px
+    classDef database fill:#F0FFF0,stroke:#3CB371,stroke-width:2px,shape:cylinder
+    classDef infrastructure fill:#E0FFFF,stroke:#5F9EA0,stroke-width:2px
+    classDef browser fill:#E8E8E8,stroke:#555,stroke-width:2px
+
+    class Browser browser
+    class Nginx infrastructure
+    class Frontend presentation
+    class APIGateway,AuthMW,LoggerMW gateway
+    class AuthService,ProductsService,LogsService service
+    class auth_db,products_db,memstore database
+```
+
+The project implements a microservice architecture pattern with a central access point (API Gateway) and separation of the presentation layer.
 
 ### Frontend (Client)
 
-- **Stack:** React 18, TypeScript, Vite.
-- **Styling:** Tailwind CSS (w tym typografia i animacje).
-- **State Management:** React Context API (`AuthContext`, `CartContext`).
-- **Komunikacja:** Biblioteka `axios` do zapytań HTTP.
-- **Routing:** React Router DOM (HashRouter).
+- **Stack:** React 18, TypeScript, Vite
+- **Styling:** Tailwind CSS (including typography and animations)
+- **State Management:** React Context API (`AuthContext`, `CartContext`)
+- **HTTP Client:** Axios
+- **Routing:** React Router DOM (HashRouter)
 
 ### API Gateway
 
-- **Technologia:** Node.js, Express.
-- **Rola:** Działa jako **Reverse Proxy** i agregator. Jest jedynym punktem kontaktu dla Frontendu.
+- **Technology:** Node.js, Express
+- **Role:** Acts as a **reverse proxy** and aggregator — the single point of contact for the frontend
 - **Middleware:**
-  - **Auth Middleware:** Weryfikuje tokeny JWT, odpytując synchronicznie serwis `AuthAPI` (`POST /verify`).
-  - **Logger Middleware:** Asynchronicznie wysyła metadane każdego zapytania (metoda, czas trwania, użytkownik) do serwisu `LoggingAPI`.
-  - **Role Middleware:** Zabezpiecza endpointy na podstawie roli użytkownika (admin/user).
-- **Komunikacja:** Przekazuje żądania do mikroserwisów (`AuthAPI`, `ProductsAPI`) używając wewnętrznych zapytań HTTP (Axios).
+  - **Auth Middleware:** Verifies JWT tokens by making a synchronous request to AuthAPI (`POST /verify`)
+  - **Logger Middleware:** Asynchronously sends request metadata (method, duration, user) to LoggingAPI
+  - **Role Middleware:** Enforces role-based access control (admin/user)
+- **Communication:** Forwards requests to microservices (AuthAPI, ProductsAPI) via internal HTTP calls (Axios)
 
-### Mikroserwisy (Backend)
+### Microservices (Backend)
 
-Każdy serwis posiada własną odpowiedzialność domenową i (w większości) własną bazę danych.
+Each service owns a specific domain and (mostly) its own database.
 
-1.  **Auth Service:**
-    - Odpowiedzialność: Rejestracja, logowanie, zarządzanie użytkownikami, weryfikacja tokenów JWT.
-    - Baza: PostgreSQL (`users` table).
-    - Security: Haszowanie haseł przy użyciu `bcrypt`.
-2.  **Products Service:**
-    - Odpowiedzialność: CRUD dla produktów.
-    - Baza: PostgreSQL (`products` table).
-3.  **Logging Service:**
-    - Odpowiedzialność: Agregacja logów systemowych.
-    - Storage: In-memory storage (tablica w pamięci RAM procesu).
+1. **Auth Service** — User registration, login, management, and JWT token verification
+   - Database: PostgreSQL (`users` table)
+   - Security: Password hashing via `bcrypt`
 
-### Komunikacja w środowisku produkcyjnym
+2. **Products Service** — CRUD operations for products
+   - Database: PostgreSQL (`products` table)
 
-W środowisku Docker Compose serwisy komunikują się w dedykowanej sieci wewnętrznej `internal_net`, która jest niedostępna z zewnątrz.
+3. **Logging Service** — System log aggregation
+   - Storage: In-memory (process RAM)
 
-- `api-gateway` widzi serwisy pod ich nazwami hostów: `http://auth-service:4002`, `http://products-service:4003`, etc.
-- Frontend komunikuje się wyłącznie z Nginx (port 80).
+### Production Networking
 
-### Przykładowa sekwencja żądania
+In Docker Compose, services communicate on a dedicated internal network (`internal_net`) not accessible from outside:
 
-Poniższy diagram sekwencji przedstawia pełny cykl życia żądania POST /products, od inicjacji przez klienta (Administratora) aż do zapisu danych w bazie i finalnej odpowiedzi. Diagram ilustruje kluczową rolę API Gateway jako koordynatora przepływu, który zarządza uwierzytelnianiem, autoryzacją i monitorowaniem.
+- `api-gateway` resolves services by hostname: `http://auth-service:4002`, `http://products-service:4003`, etc.
+- The frontend communicates exclusively with Nginx (port 80)
 
-Opis Przepływu
-Weryfikacja Tożsamości i Roli: Żądanie jest natychmiast przechwytywane przez Auth Middleware, który wykonuje synchroniczny zwrot (bounce back) do Auth Service (Krok 3) w celu walidacji tokena JWT i pobrania roli użytkownika. Dopiero po potwierdzeniu ważności tokena, Role Middleware sprawdza, czy użytkownik posiada wymaganą rolę (admin). Ten etap blokuje dalsze przetwarzanie do czasu pomyślnej autoryzacji.
+### Example Request Flow
 
-Logika Biznesowa: Po autoryzacji, API Gateway przekazuje (forwarduje) żądanie do docelowego Products Service, który wykonuje operację zapisu w Products DB.
+The sequence diagram below shows the full lifecycle of a `POST /products` request, from client initiation (Admin) through database write to final response. It illustrates the API Gateway's role as the flow coordinator — managing authentication, authorization, and monitoring.
 
-Asynchroniczne Logowanie: Po pomyślnym wykonaniu operacji przez Products Service (Krok 8) i przygotowaniu odpowiedzi dla klienta (np. 201 Created), ApiGateway inicjuje asynchroniczne (nieblokujące) wywołanie Logging Service (Krok 10). Oznacza to, że log systemowy jest zapisywany w tle, a klient otrzymuje odpowiedź, minimalizując opóźnienie.
+**Flow description:**
 
-Aby żądanie POST /products zakończyło się sukcesem, muszą zostać spełnione dwa krytyczne warunki, które są egzekwowane w API Gateway:
-Uwierzytelnienie (Authentication): Klient musi dołączyć ważny token JWT w nagłówku Authorization.
-Autoryzacja (Authorization): Użytkownik zaszyty w tokenie musi posiadać rolę admin, uprawniającą go do tworzenia nowych produktów.
+1. **Identity & Role Verification** — The request is immediately intercepted by Auth Middleware, which makes a synchronous call back to Auth Service (Step 3) to validate the JWT and retrieve the user's role. Only after token validation does Role Middleware verify the user has the required role (`admin`). This stage blocks further processing until authorization succeeds.
 
-![alt text](./local/diagram_sek.png)
+2. **Business Logic** — After authorization, API Gateway forwards the request to Products Service, which writes data to Products DB.
 
-### Rola serwera Nginx
+3. **Asynchronous Logging** — After Products Service completes the operation (Step 8) and prepares the client response (e.g., `201 Created`), API Gateway initiates a non-blocking call to Logging Service (Step 10). The system log is written in the background while the client receives its response immediately, minimizing latency.
 
-W środowisku produkcyjnym Nginx pełni podwójną rolę (zdefiniowaną w `nginx.conf`):
+**Two critical conditions must be met for `POST /products` to succeed:**
 
-1.  **Web Server:** Serwuje statyczne pliki zbudowanej aplikacji React (SPA) z katalogu `/usr/share/nginx/html`.
-2.  **Reverse Proxy:** Przekierowuje zapytania zaczynające się od `/api/` do kontenera `api-gateway` na port `4000`.
-    - Dzięki temu omijane są problemy z **CORS** (Same-Origin Policy), ponieważ zarówno frontend, jak i API są dostępne pod tą samą domeną/portem.
-    - W Dockerfile klienta następuje podmiana `base URL` w pliku `api.ts` z `http://localhost:4000` na relatywną ścieżkę `/api`, co umożliwia poprawne routowanie przez Nginx.
+- **Authentication:** The client must include a valid JWT in the `Authorization` header
+- **Authorization:** The user encoded in the token must have the `admin` role
 
-<div style="page-break-after: always"></div>
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client
+    participant Gateway as ApiGateway
+    participant Auth as AuthService
+    participant Products as ProductsService
+    participant Logs as LogsService
+    participant DB as Products DB
 
-## 4. Opis endpointów
+    Client->>Gateway: POST /products
 
----
+    rect rgb(255, 248, 220)
+        Note over Gateway,Auth: Authentication & Authorization
+        Gateway->>Gateway: Auth Middleware intercepts request
+        Gateway->>Auth: POST /verify (JWT token)
+        Auth-->>Gateway: { valid: true, role: "admin" }
+        Gateway->>Gateway: Role Middleware checks role
+    end
 
-Poniżej znajduje się zestawienie kluczowych endpointów wystawianych przez **API Gateway**.
+    rect rgb(230, 255, 230)
+        Note over Gateway,DB: Business Logic
+        Gateway->>Products: POST /products (product data)
+        Products->>DB: INSERT INTO products
+        DB-->>Products: OK
+        Products-->>Gateway: 201 Created
+    end
 
-### Publiczne (Open)
+    rect rgb(240, 248, 255)
+        Note over Gateway,Logs: Asynchronous Logging
+        Gateway-->>Client: 201 Created (response sent)
+        Gateway-->>Logs: POST /logs (async, non-blocking)
+        Note over Logs: Log entry stored in background
+    end
+```
 
-Dostępne bez tokena autoryzacyjnego.
+### Nginx Role
 
-- `GET /`: Sprawdzenie statusu API Gateway.
-- `POST /login`: Logowanie użytkownika. Przekazuje credentials do Auth Service, zwraca JWT.
-- `POST /register`: Rejestracja nowego użytkownika.
-- `GET /products`: Pobranie listy wszystkich produktów. Obsługuje query params do filtrowania.
+In production, Nginx serves a dual role (configured in `nginx.conf`):
 
-### Użytkownik (User)
+1. **Web Server** — Serves the built React SPA from `/usr/share/nginx/html`
+2. **Reverse Proxy** — Routes requests starting with `/api/` to the `api-gateway` container on port `4000`
+   - This eliminates **CORS** issues (Same-Origin Policy) since both frontend and API are served under the same domain/port
+   - The client Dockerfile rewrites the `base URL` in `api.ts` from `http://localhost:4000` to the relative path `/api`, enabling proper routing through Nginx
 
-Wymagają nagłówka `Authorization: Bearer <token>`.
+## 4. API Documentation
 
-- `GET /me`: Pobranie danych profilowych zalogowanego użytkownika.
-- `PATCH /me`: Aktualizacja profilu (email, nazwa).
-- `DELETE /me`: Usunięcie własnego konta (wymaga podania hasła dla potwierdzenia).
+The following are the key endpoints exposed by **API Gateway**.
 
-### Administrator (Admin)
+### Public
 
-Wymagają tokena z rolą `admin`.
+No authorization token required.
 
-- `GET /users`: Pobranie listy użytkowników. Obsługuje filtrowanie po `role`, `username`, `email`.
-- `POST /users`: Utworzenie nowego użytkownika (przez admina).
-- `PUT /users`: Pełna edycja/nadpisanie użytkownika.
-- `PATCH /users`: Częściowa edycja użytkownika.
-- `GET /logs`: Pobranie logów systemowych z serwisu LoggingAPI.
-- `GET /health`: Sprawdzenie stanu zdrowia wszystkich mikroserwisów (Gateway odpytuje endpointy `/health` każdego serwisu).
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | API Gateway health check |
+| `POST` | `/login` | User login — forwards credentials to Auth Service, returns JWT |
+| `POST` | `/register` | Register a new user |
+| `GET` | `/products` | List all products (supports query params for filtering) |
 
-<div style="page-break-after: always"></div>
+### User
 
-## 5. Prezentacja działania aplikacji.
+Requires `Authorization: Bearer <token>` header.
 
----
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/me` | Get current user profile |
+| `PATCH` | `/me` | Update profile (email, name) |
+| `DELETE` | `/me` | Delete own account (password confirmation required) |
 
-### 5.1. Landing Page
+### Admin
 
-![alt text](./local/landing_page.png)
+Requires a token with the `admin` role.
 
-### 5.2 Rejestracja użytkownika
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/users` | List users (filterable by `role`, `username`, `email`) |
+| `POST` | `/users` | Create a new user |
+| `PUT` | `/users` | Full user update (overwrite) |
+| `PATCH` | `/users` | Partial user update |
+| `GET` | `/logs` | Retrieve system logs from LoggingAPI |
+| `GET` | `/health` | Health check across all microservices (Gateway queries each service's `/health` endpoint) |
 
-![alt text](./local/register.png)
+## 5. Application Demo
 
-<div style="page-break-after: always"></div>
+### 5.1 Landing Page
 
-### 5.3 Logowanie użytkownika
+![Landing page with hero banner and product catalog](./local/landing_page.png)
 
-![alt text](./local/login.png)
+### 5.2 User Registration
 
-### 5.4 CRUD na produktach z panelu Administratora
+![Registration form with username, email, and password fields](./local/register.png)
 
-### 5.4.1 C - Create
+### 5.3 User Login
 
-![alt text](./local/create.png)
+![Login form with email and password fields](./local/login.png)
 
-<div style="page-break-after: always"></div>
+### 5.4 Admin Product CRUD
 
-### 5.4.2 R - Read
+#### Create
 
-![alt text](./local/read.png)
+![Admin product creation form with name, description, and price fields](./local/create.png)
 
-### 5.4.3 U - Update
+#### Read
 
-![alt text](./local/update.png)
+![Admin product listing view showing available products](./local/read.png)
 
-<div style="page-break-after: always"></div>
+#### Update
 
-### 5.4.4 D - Delete
+![Admin product edit form with pre-filled data](./local/update.png)
 
-![alt text](./local/delete.png)
+#### Delete
 
-### 5.5 Wgląd do logów z panelu Administratora
+![Admin product delete confirmation dialog](./local/delete.png)
 
-![alt text](./local/logs.png)
+### 5.5 Admin System Logs
+
+![Admin dashboard showing aggregated system logs](./local/logs.png)
