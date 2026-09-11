@@ -182,7 +182,7 @@ The project implements a microservice architecture pattern with a central access
 - **Styling:** Tailwind CSS (including typography and animations)
 - **State Management:** React Context API (`AuthContext`, `CartContext`)
 - **HTTP Client:** Axios
-- **Routing:** React Router DOM (HashRouter)
+- **Routing:** React Router DOM (BrowserRouter)
 
 ### API Gateway
 

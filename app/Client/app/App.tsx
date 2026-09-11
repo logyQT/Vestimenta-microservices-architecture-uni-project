@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Navbar } from "./components/layout/Navbar";
 import { Footer } from "./components/layout/Footer";
@@ -30,7 +30,7 @@ export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <HashRouter>
+        <BrowserRouter>
           <ScrollToTop />
           <div className="min-h-screen bg-dark-900 text-zinc-100 font-sans selection:bg-gold-500 selection:text-black">
             <Navbar />
@@ -54,7 +54,7 @@ export default function App() {
             </main>
             <Footer />
           </div>
-        </HashRouter>
+        </BrowserRouter>
       </CartProvider>
     </AuthProvider>
   );
